@@ -1,0 +1,23 @@
+name: hydro-power-prediction
+
+channels:
+  - conda-forge
+dependencies:
+  - pip
+  - pandas
+  - statsmodels
+  - mypy
+  - matplotlib
+  - pmdarima
+  - notebook
+  - lightgbm
+  - seaborn
+  - daal
+  - scikit-learn
+  - pip:
+    - ploomber
+    - tsfresh
+    - darts
+    - sktime==0.13.1
+    - prophet #only necessary cause in debug mode, all darts dependencies seem to be required
+    - catboost #same

@@ -1,0 +1,24 @@
+#!/bin/bash
+#SBATCH --partition ipu
+#SBATCH --nodes 1
+#SBATCH --ntasks-per-node 1
+#SBATCH --cpus-per-task 128
+#SBATCH --gres=ipu:1
+#SBATCH --export=NONE
+#SBATCH --job-name jupyter-notebook
+#SBATCH --output jupyter-notebook-%J.log
+
+# get tunneling info
+XDG_RUNTIME_DIR=""
+port=$(shuf -i8000-9999 -n1)
+node=$(hostname -s)
+user=$(whoami)
+
+module purge
+ml Anaconda3/2021.05
+
+source /home/${USER}/.bashrc
+source activate hydro-power-prediction-exported
+
+echo ${port}
+jupyter-lab --no-browser --port=${port} --ip=${node}

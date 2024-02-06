@@ -1,0 +1,19 @@
+meta:
+    # must declare dependencies using the "upstream" key
+    extract_upstream: False
+
+    # Extract product from source code. If False, tasks must have a "product" key
+    extract_product: False
+
+executor: serial
+tasks:
+    - source: tasks/load_data.py
+      name: load-data
+      upstream: null
+      product:
+        nb: reports/load_data.ipynb
+        data: products/data/data_raw.csv
+      params:
+        file_path: '{{root}}/{{DATA_PATH}}'
+        random_seed: '{{RANDOM_SEED}}'
+        valid_from: '{{VALIDATE_FROM}}'

@@ -1,0 +1,23 @@
+name: hydro-power-plant-prediction
+
+channels:
+  - conda-forge
+dependencies:
+  - pip
+  - pandas
+  - statsmodels
+  - mypy
+  - matplotlib
+  - pmdarima
+  - notebook
+  - lightgbm
+  - seaborn
+  - daal
+  - scikit-learn
+  - ploomber
+  - pip:
+    - ploomber
+    - pygraphviz==1.8
+    - tsfresh
+    - darts
+    - sktime==0.13.1

@@ -1,0 +1,169 @@
+meta:
+    # must declare dependencies using the "upstream" key
+    extract_upstream: False
+
+    # Extract product from source code. If False, tasks must have a "product" key
+    extract_product: False
+
+executor: serial
+tasks:
+    - source: tasks/load_data.py
+      name: load-data
+      upstream: null
+      product:
+        nb: reports/load_data.ipynb
+        data: products/data/data_raw.csv
+      params:
+        file_path: '{{root}}/{{DATA_PATH}}'
+        random_seed: '{{RANDOM_SEED}}'
+        valid_from: '{{VALIDATE_FROM}}'
+
+    - source: tasks/run_tests.py
+      name: run-tests
+      upstream: load-data
+      product:
+        nb: reports/run_tests.ipynb
+        data: products/data/data_raw_tested.csv
+      params:
+        valid_from: '{{VALIDATE_FROM}}'
+        random_seed: '{{RANDOM_SEED}}'
+
+    - source: tasks/exploratory_target.py
+      name: exploratory-target
+      upstream: run-tests
+      product:
+        nb: reports/exploratory_target.ipynb
+      params:
+        random_seed: '{{RANDOM_SEED}}'
+        valid_from: '{{VALIDATE_FROM}}'
+        plots_path: '{{PLOTS_PATH}}'
+
+    - source: tasks/exploratory_darts_daily.py
+      name: exploratory-darts-daily
+      upstream: run-tests
+      product:
+        nb: reports/exploratory_darts_daily.ipynb
+      params:
+        random_seed: '{{RANDOM_SEED}}'
+        valid_from: '2021-10-01'
+        simulate_from: '2021-12-01'
+
+    - source: tasks/exploratory_darts_cnn.py
+      name: exploratory-darts-cnn
+      upstream: run-tests
+      product:
+        nb: reports/exploratory_darts_cnn.ipynb
+      params:
+        random_seed: '{{RANDOM_SEED}}'
+        valid_from: '2021-10-01'
+        simulate_from: '2021-12-01'
+        plots_path: '{{PLOTS_PATH}}'
+
+    - source: tasks/feature_manual.py
+      name: feature-manual
+      upstream: run-tests
+      product:
+        nb: reports/feature_manual.ipynb
+        data: products/data/feature_manual.csv
+      params:
+        random_seed: '{{RANDOM_SEED}}'
+        valid_from: '{{VALIDATE_FROM}}'
+        n_lags: 7
+        arima_init_steps: 7
+        plots_path: '{{PLOTS_PATH}}'
+
+    - source: tasks/exploratory_meteo.py
+      name: exploratory-meteo
+      upstream: [run-tests, feature-manual]
+      product:
+        nb: reports/exploratory_meteo.ipynb
+        data: products/data/arima_manual_features.csv
+      params:
+        random_seed: '{{RANDOM_SEED}}'
+        valid_from: '{{VALIDATE_FROM}}'
+        daily_discount_rate: 0.005
+        plots_path: '{{PLOTS_PATH}}'
+
+    - source: tasks/exploratory_detrending.py
+      name: exploratory-detrending
+      upstream: [run-tests, feature-manual]
+      product:
+        nb: reports/exploratory_detrending.ipynb
+      params:
+        random_seed: '{{RANDOM_SEED}}'
+        valid_from: '{{VALIDATE_FROM}}'
+        simulate_from: '2021-12-01'
+
+    - source: tasks/exploratory_auto_features.py
+      name: exploratory-auto
+      upstream: [ run-tests, feature-manual ]
+      product:
+        nb: reports/exploratory_auto.ipynb
+      params:
+        random_seed: '{{RANDOM_SEED}}'
+        valid_from: '{{VALIDATE_FROM}}'
+        auto_meteo_features: '{{root}}/backup/critical/features_minute.csv'
+        auto_value_features: "{{root}}/backup/critical/features_daily_value.csv"
+        auto_meteo_daily_features: "{{root}}/backup/critical/features_daily.csv"
+        daily_discount_rate: 0.005
+        plots_path: '{{PLOTS_PATH}}'
+
+#    - source: tasks/arima_lgbm_baseline.py
+#      name: arima-lgbm-baseline
+#      upstream: [run-tests, feature-manual]
+#      product:
+#        nb: reports/arima_lgbm_baseline.ipynb
+#      params:
+#        valid_from: '2021-09-01'
+#        simulate_from: '2021-11-01'
+#        random_seed: '{{RANDOM_SEED}}'
+
+    - source: tasks/feature_meteo_auto.py
+      name: feature-meteo-auto
+      upstream: run-tests
+      product:
+        nb: reports/feature_meteo_auto.ipynb
+        features-daily: products/data/features_daily.csv
+        features-minute: products/data/features_minute.csv
+        features-hand: products/data/features_hand.csv
+        features-test: products/data/features_test.csv
+      params:
+        file_path: '{{root}}/{{DATA_PATH}}'
+        random_seed: '{{RANDOM_SEED}}'
+        valid_from: '{{VALIDATE_FROM}}'
+        minute_timeshift: 96
+        daily_timeshift: 14
+        done: true
+        features_daily: backup/critical/features_daily.csv
+        features_minute: backup/critical/features_minute.csv
+        features_test: backup/critical/features_test.csv
+
+
+#    - source: tasks/lgbm_var_selector.py
+#      name: lgbm-var-selector
+#      upstream: [run-tests, feature-manual]
+#      product:
+#        nb: reports/lgbm_var_selector.ipynb
+#      params:
+#        random_seed: '{{RANDOM_SEED}}'
+#        valid_from: '{{VALIDATE_FROM}}'
+#        objective: 'mae'
+#
+#    - source: tasks/lgbm_manual.py
+#      name: lgbm-manual
+#      upstream: [ run-tests, feature-manual ]
+#      product:
+#        nb: reports/lgbm_manual.ipynb
+#      params:
+#        random_seed: '{{RANDOM_SEED}}'
+#        valid_from: '{{VALIDATE_FROM}}'
+#        objective: 'rmse'
+
+#    - source: tasks/hp_optimize_lgbm.py
+#      name: hp-optimiz-lgbm
+#      upstream: load-data
+#      product:
+#        nb: reports/hp_optimize_lgbm.ipynb
+#      params:
+#        random_seed: '{{RANDOM_SEED}}'
+#        valid_from: '{{VALIDATE_FROM}}'
